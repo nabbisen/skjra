@@ -1,3 +1,5 @@
+use std::{path::Path, rc::Rc};
+
 use relm4::factory::FactoryVecDeque;
 use relm4::gtk::prelude::*;
 use relm4::prelude::*;
@@ -38,13 +40,17 @@ impl Component for DashboardModel {
         }
     }
 
-    fn init(_init: Self::Init, _root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
+    fn init(
+        _init: Self::Init,
+        _root: Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
         let cards = FactoryVecDeque::builder()
             .launch(gtk::Box::new(gtk::Orientation::Vertical, 5))
             .forward(sender.input_sender(), |_| {
                 // 子コンポーネントの Output が () の場合は、
                 // 親の Input に変換するメッセージがないため何もしない
-                unreachable!() 
+                unreachable!()
             });
         let model = DashboardModel { cards };
         let card_box = model.cards.widget();
@@ -58,8 +64,10 @@ impl Component for DashboardModel {
             DashboardMsg::Randomize => {
                 let mut guard = self.cards.guard();
                 guard.clear();
-                for i in 1..=10 {
-                    guard.push_back(CardModel { label: format!("Card #{}", i) });
+                for _i in 1..=3 {
+                    guard.push_back(CardModel {
+                        path: Rc::from(Path::new(".")),
+                    });
                 }
             }
         }

@@ -1,6 +1,9 @@
 use gtk::prelude::{BoxExt, GtkWindowExt};
 use relm4::gtk::prelude::*;
-use relm4::{Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmWidgetExt, SimpleComponent, gtk};
+use relm4::{
+    Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmWidgetExt,
+    SimpleComponent, gtk,
+};
 
 use crate::app::views::dashboard::DashboardModel;
 
@@ -25,7 +28,7 @@ impl SimpleComponent for AppModel {
                 set_orientation: gtk::Orientation::Vertical,
                 set_spacing: 5,
                 set_margin_all: 5,
-                
+
                 #[local_ref]
                 dashboard_widget -> gtk::Box {}
             }
@@ -37,9 +40,7 @@ impl SimpleComponent for AppModel {
         root: Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let dashboard = DashboardModel::builder()
-            .launch(())
-            .detach();
+        let dashboard = DashboardModel::builder().launch(()).detach();
 
         let model = AppModel { dashboard };
 
