@@ -1,4 +1,8 @@
-use std::{path::Path, rc::Rc, time::UNIX_EPOCH};
+use std::{
+    path::{Path, PathBuf},
+    rc::Rc,
+    time::UNIX_EPOCH,
+};
 
 use chrono::{DateTime, Local};
 use endringer::status_digest;
@@ -11,7 +15,7 @@ pub struct CardModel {
 
 #[derive(Debug)]
 pub enum CardOutput {
-    RepoSelected,
+    RepoSelected(PathBuf),
 }
 
 pub struct Card {
@@ -71,7 +75,10 @@ impl FactoryComponent for Card {
 
                 gtk::Button {
                     set_label: "選択",
-                    connect_clicked => sender.output(CardOutput::RepoSelected).unwrap(),
+                    connect_clicked[sender, path = self.path.clone()] => move |_| {
+                        let path_buf = path.to_path_buf();
+                        sender.output(CardOutput::RepoSelected(path_buf)).unwrap();
+                    },
                 },
             }
         }

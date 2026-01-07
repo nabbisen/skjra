@@ -270,9 +270,9 @@ dependencies = [
 
 [[package]]
 name = "endringer"
-version = "0.1.1"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7ea145330f2f7cf25d1f23a7eb1547e516a11d0382219d11759db9099eb903f"
+checksum = "98689dcc4582ed34e3e682979604012c9e60ee180a3a5dc55b338e691d3ef2f6"
 dependencies = [
  "anyhow",
  "gix",
