@@ -27,8 +27,7 @@ lto = false           # disable link-time optimizations
 incremental = true
 
 [dependencies]
-#endringer = "0"
-endringer = { path = "../endringer" }
+endringer = "0"
 
 cairo-rs = "0"
 chrono = { version = "0", default-features = false, features = ["clock"] }
