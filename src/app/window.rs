@@ -29,8 +29,8 @@ impl Component for AppModel {
     view! {
         gtk::Window {
             set_title: Some("Change Shelf"),
-            set_default_width: 800,
-            set_default_height: 500,
+            set_default_width: 1000,
+            set_default_height: 700,
 
             gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,

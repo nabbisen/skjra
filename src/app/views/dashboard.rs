@@ -38,25 +38,27 @@ impl Component for DashboardModel {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 10,
 
-            gtk::ScrolledWindow {
-                set_vexpand: true,
-                #[local_ref]
-                card_box -> gtk::Box {}
-            },
+            gtk::Overlay {
+                gtk::ScrolledWindow {
+                    set_vexpand: true,
+                    #[local_ref]
+                    card_box -> gtk::Box {}
+                },
 
-            gtk::Revealer {
-                        set_transition_type: gtk::RevealerTransitionType::SlideLeft,
-                        set_halign: gtk::Align::End,
-                        set_valign: gtk::Align::Fill,
+                add_overlay = &gtk::Revealer {
+                    set_transition_type: gtk::RevealerTransitionType::SlideLeft,
+                    set_halign: gtk::Align::End,
+                    set_valign: gtk::Align::Fill,
 
-                        #[watch]
-                        set_reveal_child: model.card_detail_visible,
+                    #[watch]
+                    set_reveal_child: model.card_detail_visible,
 
-                        // 子コンポーネントのウィジェットを配置
-                        #[local_ref]
-                        card_detail -> gtk::Box {},
-                    }
-            },
+                    // 子コンポーネントのウィジェットを配置
+                    #[local_ref]
+                    card_detail -> gtk::Box {},
+                }
+            }
+        },
     }
 
     fn init(

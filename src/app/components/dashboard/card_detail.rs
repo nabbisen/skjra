@@ -36,6 +36,7 @@ impl Component for CardDetailModel {
             set_width_request: 500,
             set_height_request: 600,
             // add_css_class: "background", // 背景色を確保
+            inline_css: "background: #000;",
 
             // ヘッダー部分
             gtk::CenterBox {
