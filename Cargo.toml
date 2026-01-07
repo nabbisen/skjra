@@ -27,6 +27,7 @@ lto = false           # disable link-time optimizations
 incremental = true
 
 [dependencies]
+chrono = { version = "0", default-features = false, features = ["clock"] }
 endringer = "0"
 
 gix = "0"
