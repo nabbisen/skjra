@@ -20,7 +20,7 @@ pub struct DashboardModel {
 
 #[derive(Debug)]
 pub enum DashboardInput {
-    Demo,
+    RootSelected(PathBuf),
     RepoSelected(PathBuf),
     CloseCardDetail,
 }
@@ -36,11 +36,6 @@ impl Component for DashboardModel {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 10,
-
-            gtk::Button {
-                set_label: "デモ生成",
-                connect_clicked => DashboardInput::Demo,
-            },
 
             gtk::ScrolledWindow {
                 set_vexpand: true,
@@ -98,7 +93,9 @@ impl Component for DashboardModel {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            DashboardInput::Demo => {
+            DashboardInput::RootSelected(path_buf) => {
+                println!("xxxxxxxx {:?}", path_buf);
+
                 let mut guard = self.cards.guard();
                 guard.clear();
                 for _i in 1..=3 {
