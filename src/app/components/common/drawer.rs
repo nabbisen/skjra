@@ -1,5 +1,5 @@
 use iced::font::Weight;
-use iced::widget::{Container, button, column, container, mouse_area, row, text};
+use iced::widget::{button, column, container, mouse_area, row, scrollable, text};
 use iced::{Alignment, Element, Length};
 
 /// 汎用的な Drawer コンポーネント
@@ -50,7 +50,7 @@ where
                 ]
                 .align_y(Alignment::Center),
                 // メインコンテンツ部分
-                container(self.content)
+                scrollable(self.content)
                     .width(Length::Fill)
                     .height(Length::Fill)
             ]
@@ -59,20 +59,19 @@ where
         .padding(25)
         // .width(400) // 固定幅にすると「右から出ている感」が出る
         .width(Length::FillPortion(1))
-        // .height(Length::Fill)
-        // .style(|_theme| container::Style {
-        //     background: Some(iced::Color::WHITE.into()),
-        //     shadow: iced::Shadow {
-        //         color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.15),
-        //         offset: iced::Vector::new(-5.0, 0.0),
-        //         blur_radius: 15.0,
-        //     },
-        //     ..Default::default()
-        // });
-        ;
+        .height(Length::Fill)
+        .style(|_theme| container::Style {
+            background: Some(iced::Color::BLACK.into()),
+            shadow: iced::Shadow {
+                color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.08),
+                offset: iced::Vector::new(-2.5, 0.0),
+                blur_radius: 7.5,
+            },
+            ..Default::default()
+        });
 
         // --- 背景（クリックで閉じるエリア） ---
-        let mut backdrop_container = container(text(""))
+        let backdrop_container = container(text(""))
             .width(Length::Fill)
             .height(Length::Fill)
             .style(|_| {

@@ -97,7 +97,7 @@ impl Dashboard {
                     self.cards_update();
                 }
             }
-            Message::DemoDelete(id, card_msg) => {
+            Message::DemoDelete(id, _card_msg) => {
                 // match card_msg {
                 //     card::Message::DemoDelete => {
                 //         // 特定のIDのカードを削除
@@ -111,7 +111,7 @@ impl Dashboard {
     }
 
     fn cards_update(self: &mut Self) {
-        let mut ret: Vec<Card> = vec![];
+        // let mut ret: Vec<Card> = vec![];
 
         if let Some(path) = self.selected_path.clone() {
             if path.is_dir() && path.join(".git").is_dir() {
@@ -163,8 +163,18 @@ impl Dashboard {
     }
 
     fn view_card_details(&self) -> Element<'_, Message> {
-        column![text(self.selected_card_id.clone().unwrap_or(123)),]
-            .spacing(10)
-            .into()
+        // let handle = Handle::from_pixels(width as u32, height as u32, pixels);
+
+        // Image::new(handle).into()
+        // column![text(self.selected_card_id.clone().unwrap_or(123)),]
+        //     .spacing(10)
+        //     .into()
+        let rows = (0..100)
+            .map(|i| {
+                // 各行の Column
+                row![text(format!("row {}", i)), text("item A"), text("item B"),].into()
+            })
+            .collect::<Vec<_>>();
+        column(rows).into()
     }
 }
