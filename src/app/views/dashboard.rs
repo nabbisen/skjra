@@ -10,11 +10,12 @@ use crate::app::components::{
     },
     dashboard::card::{self, Card},
 };
+use chrono::{DateTime, Utc};
 use endringer::repository::repository;
 use iced::{
     Element,
     Length::Fill,
-    widget::{Container, button, column, row, scrollable, stack, text},
+    widget::{Container, button, column, container, row, scrollable, stack, text},
 };
 
 #[derive(Default)]
@@ -172,10 +173,38 @@ impl Dashboard {
         //     .expect("failed to get dag");
         // let graph = build_petgraph(&dag);
 
-        let rows = (0..100)
-            .map(|i| {
+        let card = self
+            .cards
+            .iter()
+            .find(|x| {
+                if let Some(card_id) = self.selected_card_id {
+                    card_id == x.id
+                } else {
+                    false
+                }
+            })
+            .expect("failed to find selected card");
+
+        let commits = card
+            .repository
+            .list_commits()
+            .expect("failed to get commits");
+
+        let rows = commits
+            .iter()
+            .map(|x| {
+                let datetime: DateTime<Utc> = x.timestamp.into();
+                let datetime_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+
                 // 各行の Column
-                row![text(format!("row {}", i)), text("item A"), text("item B"),].into()
+                container(column![
+                    text(x.commit_id.to_string()),
+                    text(x.summary.to_owned()),
+                    text(x.author.to_owned()),
+                    text(datetime_str),
+                ])
+                .padding(10)
+                .into()
             })
             .collect::<Vec<_>>();
         // let mut rows = vec![];
