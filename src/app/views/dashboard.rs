@@ -1,10 +1,8 @@
 use std::{
-    collections::HashMap,
     fs::{self},
     path::{Path, PathBuf},
 };
 
-// components/search_bar.rs
 use crate::app::components::{
     common::{
         drawer::Drawer,
@@ -12,16 +10,12 @@ use crate::app::components::{
     },
     dashboard::card::{self, Card},
 };
-use endringer::{
-    repository,
-    types::{CommitInfo, DagInfo, Repository},
-};
+use endringer::repository::repository;
 use iced::{
     Element,
     Length::Fill,
     widget::{Container, button, column, row, scrollable, stack, text},
 };
-use petgraph::graph::DiGraph;
 
 #[derive(Default)]
 pub struct Dashboard {
@@ -199,11 +193,11 @@ impl Dashboard {
 fn card(id: usize, path: &Path) -> Card {
     let repository = repository(path).expect("failed to get repository");
 
-    let status_digest = match endringer::status_digest(&repository) {
+    let status_digest = match repository.status_digest() {
         Ok(a) => Some(a),
         Err(_) => None,
     };
-    let local_branches = endringer::local_branches(&repository).expect("failed to get branches");
+    let local_branches = repository.local_branches().expect("failed to get branches");
     let options = local_branches
         .iter()
         .enumerate()
@@ -221,25 +215,4 @@ fn card(id: usize, path: &Path) -> Card {
         status_digest,
         branch_selector,
     }
-}
-
-fn build_petgraph(dag: &DagInfo) -> DiGraph<CommitInfo, ()> {
-    let mut graph = DiGraph::<CommitInfo, ()>::new();
-    let mut id_map = HashMap::new();
-
-    // ノードの追加
-    for (oid, info) in dag.nodes.clone() {
-        let idx = graph.add_node(info);
-        id_map.insert(oid, idx);
-    }
-
-    // エッジの追加 (子 -> 親)
-    for (child_oid, parent_oid) in dag.edges.clone() {
-        if let (Some(&child_idx), Some(&parent_idx)) =
-            (id_map.get(&child_oid), id_map.get(&parent_oid))
-        {
-            graph.add_edge(child_idx, parent_idx, ());
-        }
-    }
-    graph
 }

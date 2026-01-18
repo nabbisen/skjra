@@ -845,9 +845,9 @@ checksum = "66b7e2430c6dff6a955451e2cfc438f09cea1965a9d6f87f7e3b90decc014099"
 
 [[package]]
 name = "endringer"
-version = "0.6.2"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1764ed542066b82c0a6a3049d6b161685309022ee7502a5ec18ca6884ce7f1a0"
+checksum = "ffd34148c8c1ec1781f61ec1545d44acac01201ac877763b192125f66e1f4104"
 dependencies = [
  "anyhow",
  "gix",

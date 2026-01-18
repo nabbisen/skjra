@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
-use endringer::types::{Repository, StatusDigest};
+use endringer::repository::Repository;
+use endringer::types::StatusDigest;
 use iced::widget::{Column, button, column, container, text};
 use iced::{Alignment, Element, Length};
 
