@@ -12,7 +12,10 @@ use crate::app::components::{
     },
     dashboard::card::{self, Card},
 };
-use endringer::types::{CommitInfo, DagInfo};
+use endringer::{
+    repository,
+    types::{CommitInfo, DagInfo, Repository},
+};
 use iced::{
     Element,
     Length::Fill,
@@ -194,11 +197,13 @@ impl Dashboard {
 }
 
 fn card(id: usize, path: &Path) -> Card {
-    let status_digest = match endringer::status_digest(path) {
+    let repository = repository(path).expect("failed to get repository");
+
+    let status_digest = match endringer::status_digest(&repository) {
         Ok(a) => Some(a),
         Err(_) => None,
     };
-    let local_branches = endringer::local_branches(path).expect("failed to get branches");
+    let local_branches = endringer::local_branches(&repository).expect("failed to get branches");
     let options = local_branches
         .iter()
         .enumerate()
@@ -212,6 +217,7 @@ fn card(id: usize, path: &Path) -> Card {
     Card {
         id,
         path: path.to_path_buf(),
+        repository,
         status_digest,
         branch_selector,
     }

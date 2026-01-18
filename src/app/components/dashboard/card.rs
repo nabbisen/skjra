@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use endringer::types::StatusDigest;
+use endringer::types::{Repository, StatusDigest};
 use iced::widget::{Column, button, column, container, text};
 use iced::{Alignment, Element, Length};
 
@@ -11,6 +11,7 @@ use crate::app::utils::system_time_to_string;
 pub struct Card {
     pub id: usize,
     pub path: PathBuf,
+    pub repository: Repository,
     pub status_digest: Option<StatusDigest>,
     pub branch_selector: Select,
 }
@@ -25,12 +26,14 @@ impl Card {
     pub fn new(
         id: usize,
         path: PathBuf,
+        repository: Repository,
         status_digest: Option<StatusDigest>,
         branch_selector: Select,
     ) -> Self {
         Self {
             id,
             path,
+            repository,
             status_digest,
             branch_selector,
         }
@@ -56,7 +59,9 @@ impl Card {
             c = c.push(text(repo_name).size(20));
             c = c.push(text(status_digest.current_branch));
             c = c.push(text(status_digest.last_commit_summary));
-            c = c.push(text(system_time_to_string(status_digest.last_commit_time)));
+            c = c.push(text(system_time_to_string(
+                status_digest.last_commit_timestamp,
+            )));
         } else {
             c = c.push(text(dir_name).size(20));
         };
