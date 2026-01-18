@@ -486,17 +486,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
-name = "changeshelf"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "endringer",
- "iced",
- "petgraph",
- "rfd",
-]
-
-[[package]]
 name = "chrono"
 version = "0.4.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3808,6 +3797,17 @@ checksum = "c4db69cba1110affc0e9f7bcd48bbf87b3f4fc7c61fc9155afd4c469eb3d6c1b"
 dependencies = [
  "errno",
  "libc",
+]
+
+[[package]]
+name = "skjra"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "endringer",
+ "iced",
+ "petgraph",
+ "rfd",
 ]
 
 [[package]]
