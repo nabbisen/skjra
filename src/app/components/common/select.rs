@@ -1,27 +1,34 @@
 // src/string_select.rs
-use iced::widget::{column, pick_list, text};
+use iced::widget::{column, combo_box, text};
 use iced::{Element, Length};
-
-// 1. コンポーネントから発生するイベント（メッセージ）を定義
-#[derive(Debug, Clone)]
-pub enum Message {
-    ItemSelected(String), // 選択変更時に発生するイベント
-}
 
 // 2. コンポーネントの状態（State）を定義
 #[derive(Clone, Debug)]
 pub struct Select {
-    options: Vec<String>,           // 登録された選択肢
-    selected_value: Option<String>, // 現在選択されている値
-    label: String,                  // ラベル（任意）
+    // コンボボックスの状態（選択肢のマスターリストを管理）
+    options: combo_box::State<String>,
+    // 現在入力されているテキスト
+    input_value: String,
+    // 最終的に選択された値
+    selected_item: Option<String>,
+    label: String,
+}
+
+// 1. コンポーネントから発生するイベント（メッセージ）を定義
+#[derive(Debug, Clone)]
+pub enum Message {
+    InputChanged(String),   // 入力内容が変わったとき
+    OptionSelected(String), // 選択肢が選ばれたとき
+    Closed,                 // メニューが閉じられたとき
 }
 
 impl Select {
     // 3. 初期化：選択アイテム群を登録する
     pub fn new(options: Vec<String>, label: impl Into<String>) -> Self {
         Self {
-            options,
-            selected_value: None, // 初期状態は未選択
+            options: combo_box::State::new(options),
+            input_value: String::new(),
+            selected_item: None,
             label: label.into(),
         }
     }
@@ -29,15 +36,17 @@ impl Select {
     // 内部の状態を更新するロジック
     pub fn update(&mut self, message: Message) {
         match message {
-            Message::ItemSelected(value) => {
-                self.selected_value = Some(value);
+            Message::InputChanged(value) => {
+                self.input_value = value;
+            }
+            Message::OptionSelected(item) => {
+                self.selected_item = Some(item.clone());
+                self.input_value = item; // 選択した値を入力欄に反映
+            }
+            Message::Closed => {
+                // 必要に応じて、閉じられた時の処理を記述
             }
         }
-    }
-
-    // 親側から現在の値を取得するためのヘルパー
-    pub fn get_selected(&self) -> Option<&String> {
-        self.selected_value.as_ref()
     }
 
     // 4. View：UIを描画
@@ -46,15 +55,26 @@ impl Select {
     pub fn view(&self) -> Element<'_, Message> {
         let label = text(&self.label);
 
-        // pick_list(選択肢の参照, 現在の選択値, 変更時のメッセージ生成関数)
-        let pick_list = pick_list(
-            self.options.as_slice(),
-            self.selected_value.clone(),
-            Message::ItemSelected,
+        // combo_box にはフィルタリング前の「State全体」を渡します
+        let selection_input = combo_box(
+            &self.options,               // Stateへの参照
+            "都市を検索...",             // プレースホルダ
+            self.selected_item.as_ref(), // 現在の選択値
+            Message::OptionSelected,     // 選択時のメッセージ
         )
-        .placeholder("選択してください...")
-        .width(Length::Fill);
+        .on_input(Message::InputChanged) // 入力時のメッセージ（ここでフィルタリングが動く）
+        .width(250);
 
-        column![label, pick_list].spacing(10).into()
+        let content = column![
+            text("都市を選択してください:").size(20),
+            selection_input,
+            text(format!(
+                "選択中: {}",
+                self.selected_item.as_deref().unwrap_or("未選択")
+            )),
+        ]
+        .spacing(20);
+
+        column![label, content].spacing(10).into()
     }
 }
