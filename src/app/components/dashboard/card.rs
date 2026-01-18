@@ -18,7 +18,7 @@ pub struct Card {
 #[derive(Debug, Clone)]
 pub enum Message {
     DemoDelete, // 削除ボタンが押された
-    SelectorMessage(select::Message),
+    SelectMessage(select::Message),
 }
 
 impl Card {
@@ -66,7 +66,7 @@ impl Card {
         c = c.push(
             self.branch_selector
                 .view()
-                .map(move |msg| Message::SelectorMessage(msg)),
+                .map(move |msg| Message::SelectMessage(msg)),
         );
 
         container(c.spacing(10).align_x(Alignment::Center))
@@ -78,12 +78,12 @@ impl Card {
 
     pub fn update(&mut self, message: Message) {
         match message {
-            Message::SelectorMessage(selector_message) => {
+            Message::SelectMessage(select_message) => {
                 // 1. まず子に処理させて、子の状態を更新する
-                self.branch_selector.update(selector_message.clone());
+                self.branch_selector.update(select_message.clone());
 
                 // 2. その上で、もし「選択」イベントだったら親としての追加処理をする
-                if let select::Message::OptionSelected(selected_value) = selector_message {
+                if let select::Message::OptionSelected(selected_value) = select_message {
                     println!("親が選択を検知しました: {}", selected_value);
                     // ここで親にしかできない処理（API呼び出しなど）を書く
                 }

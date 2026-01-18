@@ -6,24 +6,36 @@ use iced::widget::{column, combo_box, text};
 #[derive(Clone, Debug)]
 pub struct Select {
     // コンボボックスの状態（選択肢のマスターリストを管理）
-    options: combo_box::State<String>,
+    options: combo_box::State<SelectOption>,
     // 最終的に選択された値
-    selected_item: Option<String>,
+    selected_item: Option<SelectOption>,
     // 現在入力されているテキスト
     input_value: String,
     label: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SelectOption {
+    pub id: usize,
+    pub label: String,
+}
+
+impl std::fmt::Display for SelectOption {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.label)
+    }
+}
+
 // 1. コンポーネントから発生するイベント（メッセージ）を定義
 #[derive(Debug, Clone)]
 pub enum Message {
-    InputChanged(String),   // 入力内容が変わったとき
-    OptionSelected(String), // 選択肢が選ばれたとき
+    InputChanged(String),         // 入力内容が変わったとき
+    OptionSelected(SelectOption), // 選択肢が選ばれたとき
 }
 
 impl Select {
     // 3. 初期化：選択アイテム群を登録する
-    pub fn new(options: Vec<String>, label: impl Into<String>) -> Self {
+    pub fn new(options: Vec<SelectOption>, label: impl Into<String>) -> Self {
         Self {
             options: combo_box::State::new(options),
             input_value: String::new(),
@@ -53,7 +65,10 @@ impl Select {
             selection_input,
             text(format!(
                 "選択中: {}",
-                self.selected_item.as_deref().unwrap_or("未選択")
+                self.selected_item
+                    .as_ref()
+                    .map(|item| item.to_string())
+                    .unwrap_or_else(|| "未選択".to_string())
             )),
         ]
         .spacing(20);
@@ -69,7 +84,7 @@ impl Select {
             }
             Message::OptionSelected(item) => {
                 self.selected_item = Some(item.clone());
-                self.input_value = item; // 選択した値を入力欄に反映
+                self.input_value = item.to_string(); // 選択した値を入力欄に反映
             }
         }
     }

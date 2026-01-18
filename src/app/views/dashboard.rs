@@ -1,8 +1,15 @@
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fs::{self},
+    path::{Path, PathBuf},
+};
 
 // components/search_bar.rs
 use crate::app::components::{
-    common::{drawer::Drawer, select::Select},
+    common::{
+        drawer::Drawer,
+        select::{self, Select},
+    },
     dashboard::card::{self, Card},
 };
 use endringer::types::{CommitInfo, DagInfo};
@@ -121,20 +128,9 @@ impl Dashboard {
     fn cards_update(self: &mut Self) {
         // let mut ret: Vec<Card> = vec![];
 
-        if let Some(path) = self.selected_path.clone() {
+        if let Some(path) = self.selected_path.as_ref() {
             if path.is_dir() && path.join(".git").is_dir() {
-                self.cards = vec![Card {
-                    id: 0,
-                    path: path.clone(),
-                    status_digest: match endringer::status_digest(path.as_path()) {
-                        Ok(a) => Some(a),
-                        Err(_) => None,
-                    },
-                    branch_selector: Select::new(
-                        vec!["test".to_owned(), "test2".to_owned()],
-                        "test".to_owned(),
-                    ),
-                }];
+                self.cards = vec![card(0, path.as_path())];
                 return;
             }
         }
@@ -163,18 +159,7 @@ impl Dashboard {
         self.cards = repos
             .iter()
             .enumerate()
-            .map(|(i, x)| Card {
-                id: i,
-                path: x.path(),
-                status_digest: match endringer::status_digest(x.path().as_path()) {
-                    Ok(a) => Some(a),
-                    Err(_) => None,
-                },
-                branch_selector: Select::new(
-                    vec!["test".to_owned(), "test2".to_owned()],
-                    "test".to_owned(),
-                ),
-            })
+            .map(|(id, x)| card(id, x.path().as_path()))
             .collect();
     }
 
@@ -205,6 +190,30 @@ impl Dashboard {
         //     rows.push(row.into());
         // }
         column(rows).into()
+    }
+}
+
+fn card(id: usize, path: &Path) -> Card {
+    let status_digest = match endringer::status_digest(path) {
+        Ok(a) => Some(a),
+        Err(_) => None,
+    };
+    let local_branches = endringer::local_branches(path).expect("failed to get branches");
+    let options = local_branches
+        .iter()
+        .enumerate()
+        .map(|(id, x)| select::SelectOption {
+            id,
+            label: x.name.to_owned(),
+        })
+        .collect();
+    let branch_selector = Select::new(options, "test".to_owned());
+
+    Card {
+        id,
+        path: path.to_path_buf(),
+        status_digest,
+        branch_selector,
     }
 }
 
