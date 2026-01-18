@@ -1,6 +1,5 @@
-use crate::app::start;
-
 mod app;
+
 fn main() {
-    start();
+    let _ = app::start();
 }

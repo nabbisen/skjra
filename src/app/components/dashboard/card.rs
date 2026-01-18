@@ -1,98 +1,100 @@
-use std::{
-    path::{Path, PathBuf},
-    rc::Rc,
-    time::UNIX_EPOCH,
-};
+use std::path::PathBuf;
 
-use chrono::{DateTime, Local};
-use endringer::status_digest;
-use relm4::{gtk::prelude::*, prelude::*};
+use endringer::repository::Repository;
+use endringer::types::StatusDigest;
+use iced::widget::{Column, button, column, container, text};
+use iced::{Alignment, Element, Length};
 
-// 子コンポーネントに渡すデータ
-pub struct CardModel {
-    pub path: Rc<Path>,
-}
+use crate::app::components::common::select::{self, Select};
+use crate::app::utils::system_time_to_string;
 
-#[derive(Debug)]
-pub enum CardOutput {
-    RepoSelected(PathBuf),
-}
-
+#[derive(Debug, Clone)]
 pub struct Card {
-    path: Rc<Path>,
-    status_digest: endringer::types::StatusDigest,
+    pub id: usize,
+    pub path: PathBuf,
+    pub repository: Repository,
+    pub status_digest: Option<StatusDigest>,
+    pub branch_selector: Select,
 }
 
-#[relm4::factory(pub)]
-impl FactoryComponent for Card {
-    type Init = CardModel;
-    type Input = ();
-    type Output = CardOutput;
-    type CommandOutput = ();
-    type ParentWidget = gtk::Box; // 親がどのウィジェットか指定
+#[derive(Debug, Clone)]
+pub enum Message {
+    DemoDelete, // 削除ボタンが押された
+    SelectMessage(select::Message),
+}
 
-    view! {
-        gtk::Frame {
-            set_label: Some(&self.path.to_str().unwrap()),
-
-            set_margin_all: 8,
-
-            gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                set_spacing: 5,
-                set_margin_all: 10,
-
-                gtk::Label {
-                    set_selectable: true,
-                    set_label: &self.status_digest.repo_name,
-                },
-                gtk::Label {
-                    set_selectable: true,
-                    set_label: &self.status_digest.current_branch,
-                },
-                gtk::Label {
-                    set_selectable: true,
-                    set_label: &self.status_digest.last_commit_summary,
-                },
-                gtk::Label {
-                    set_selectable: true,
-                    set_label: &({
-                        let duration_since_epoch = &self.status_digest.last_commit_time
-                            .duration_since(UNIX_EPOCH)
-                            .expect("SystemTime earlier than UNIX_EPOCH");
-
-                        // Build a chrono DateTime<Local> from the seconds + nanoseconds
-                        let datetime: DateTime<Local> = DateTime::from_timestamp(
-                                duration_since_epoch.as_secs() as i64,
-                                duration_since_epoch.subsec_nanos(),
-                            )
-                            .expect("Invalid timestamp")
-                            .with_timezone(&Local);
-                        let x = datetime.to_string();
-                        x
-                    }),
-                },
-
-                gtk::Button {
-                    set_label: "選択",
-                    connect_clicked[sender, path = self.path.clone()] => move |_| {
-                        let path_buf = path.to_path_buf();
-                        sender.output(CardOutput::RepoSelected(path_buf)).unwrap();
-                    },
-                },
-            }
-        }
-    }
-
-    // init_model でモデルを初期化
-    fn init_model(init: Self::Init, _index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
-        let status_digest = status_digest(&init.path).expect("failed to get status digest");
+impl Card {
+    pub fn new(
+        id: usize,
+        path: PathBuf,
+        repository: Repository,
+        status_digest: Option<StatusDigest>,
+        branch_selector: Select,
+    ) -> Self {
         Self {
-            path: init.path,
+            id,
+            path,
+            repository,
             status_digest,
+            branch_selector,
         }
     }
 
-    // Factory特有の更新処理（今回はシンプルにそのまま）
-    fn update(&mut self, _msg: Self::Input, _sender: FactorySender<Self>) {}
+    pub fn view(&self) -> Element<'_, Message> {
+        let mut c: Column<'_, Message> = column![];
+
+        let dir_name = self
+            .path
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        if let Some(status_digest) = self.status_digest.clone() {
+            // todo: currently endringer can't open repo whose name is different from dir name
+            // therefore, always go to else clause
+            let repo_name = if status_digest.repo_name != dir_name {
+                format!("{} (Dir: {})", status_digest.repo_name, dir_name)
+            } else {
+                status_digest.repo_name
+            };
+            c = c.push(text(repo_name).size(20));
+            c = c.push(text(status_digest.current_branch));
+            c = c.push(text(status_digest.last_commit_summary));
+            c = c.push(text(system_time_to_string(
+                status_digest.last_commit_timestamp,
+            )));
+        } else {
+            c = c.push(text(dir_name).size(20));
+        };
+
+        c = c.push(button("詳細").on_press(Message::DemoDelete));
+
+        c = c.push(
+            self.branch_selector
+                .view()
+                .map(move |msg| Message::SelectMessage(msg)),
+        );
+
+        container(c.spacing(10).align_x(Alignment::Center))
+            .padding(20)
+            .width(Length::Fixed(150.0))
+            .style(container::rounded_box) // 0.14のスタイル指定
+            .into()
+    }
+
+    pub fn update(&mut self, message: Message) {
+        match message {
+            Message::SelectMessage(select_message) => {
+                // 1. まず子に処理させて、子の状態を更新する
+                self.branch_selector.update(select_message.clone());
+
+                // 2. その上で、もし「選択」イベントだったら親としての追加処理をする
+                if let select::Message::OptionSelected(selected_value) = select_message {
+                    println!("親が選択を検知しました: {}", selected_value);
+                    // ここで親にしかできない処理（API呼び出しなど）を書く
+                }
+            }
+            Message::DemoDelete => {}
+        }
+    }
 }

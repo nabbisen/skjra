@@ -1,135 +1,168 @@
 use std::{collections::HashMap, path::PathBuf, rc::Rc};
 
 use endringer::types::{CommitInfo, DagInfo};
-use gtk::prelude::*;
 use petgraph::{graph::DiGraph, visit::EdgeRef};
-use relm4::prelude::*;
 
-pub struct CardDetailModel {
-    drawing_area: Rc<gtk::DrawingArea>,
+#[derive(Debug, Clone)]
+pub struct CardDetail {
+    pub id: usize,
+    pub path: PathBuf,
+    pub status_digest: Option<StatusDigest>,
 }
 
-#[derive(Debug)]
-pub enum CardDetailInput {
-    // メインから drawer への命令
-    RepoSelected(PathBuf),
-    CloseRequested,
+#[derive(Debug, Clone)]
+pub enum Message {
+    DemoDelete, // 削除ボタンが押された
 }
 
-#[derive(Debug)]
-pub enum CardDetailOutput {
-    // drawer からメインへの通知（「閉じるボタンが押された」など）
-    CloseRequested,
-}
-
-#[relm4::component(pub)]
-impl Component for CardDetailModel {
-    type Init = ();
-    type Input = CardDetailInput;
-    type Output = CardDetailOutput;
-    type CommandOutput = ();
-
-    view! {
-        #[root]
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
-            set_width_request: 500,
-            set_height_request: 600,
-            // add_css_class: "background", // 背景色を確保
-            inline_css: "background: #000;",
-
-            // ヘッダー部分
-            gtk::CenterBox {
-                set_margin_all: 10,
-                #[wrap(Some)]
-                set_center_widget = &gtk::Label {
-                    set_label: "メニュー",
-                    // add_css_class: "title-4",
-                },
-                #[wrap(Some)]
-                set_end_widget = &gtk::Button {
-                    set_icon_name: "window-close-symbolic",
-                    // add_css_class: "flat",
-                    // メインウィンドウへ「閉じてほしい」と通知
-                    connect_clicked => CardDetailInput::CloseRequested,
-                }
-            },
-
-            gtk::Separator {},
-
-            gtk::ScrolledWindow {
-                set_vexpand: true,
-                inline_css: "background: #fff;",
-
-                #[name = "drawing_area"]
-                gtk::DrawingArea {
-                    set_content_width: 800,
-                    set_content_height: 1000,
-                    // 描画関数のセットアップ（下記 init / update 内で実行）
-                }
-            },
-
-            // メニューリスト
-            gtk::ListBox {
-                add_css_class: "navigation-sidebar",
-                set_vexpand: true,
-
-                gtk::Label { set_label: "Zoom in", set_margin_all: 10 },
-                gtk::Label { set_label: "Zoom out", set_margin_all: 10 },
-            }
+impl CardDetail {
+    pub fn new(id: usize, path: PathBuf, status_digest: Option<StatusDigest>) -> Self {
+        Self {
+            id,
+            path,
+            status_digest,
         }
     }
 
-    fn init(
-        _: Self::Init,
-        _root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
-        let widgets = view_output!();
+    pub fn view(&self) -> Element<'_, Message> {
+        let mut c: Column<'_, Message> = column![];
 
-        let model = CardDetailModel {
-            drawing_area: Rc::from(widgets.drawing_area.clone()),
+        let dir_name = self
+            .path
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        if let Some(status_digest) = self.status_digest.clone() {
+            // todo: currently endringer can't open repo whose name is different from dir name
+            // therefore, always go to else clause
+            let repo_name = if status_digest.repo_name != dir_name {
+                format!("{} (Dir: {})", status_digest.repo_name, dir_name)
+            } else {
+                status_digest.repo_name
+            };
+            c = c.push(text(repo_name).size(20));
+            c = c.push(text(status_digest.current_branch));
+            c = c.push(text(status_digest.last_commit_summary));
+            c = c.push(text(system_time_to_string(status_digest.last_commit_time)));
+        } else {
+            c = c.push(text(dir_name).size(20));
         };
 
-        ComponentParts { model, widgets }
-    }
+        c = c.push(button("削除").on_press(Message::DemoDelete));
 
-    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
-        match msg {
-            // 内部ロジックが必要な場合
-            CardDetailInput::RepoSelected(path_buf) => {
-                let dag = endringer::dag(&path_buf.as_path()).expect("failed to get dag");
-                self.drawing_area.set_draw_func(move |_, cr, _w, _h| {
-                    draw_graph(cr, &build_petgraph(&dag));
-                });
-            }
-            CardDetailInput::CloseRequested => {
-                sender.output(CardDetailOutput::CloseRequested).unwrap()
-            }
-        }
+        container(c.spacing(10).align_x(Alignment::Center))
+            .padding(20)
+            .width(Length::Fixed(150.0))
+            .style(container::rounded_box) // 0.14のスタイル指定
+            .into()
     }
 }
 
-fn build_petgraph(dag: &DagInfo) -> DiGraph<CommitInfo, ()> {
-    let mut graph = DiGraph::<CommitInfo, ()>::new();
-    let mut id_map = HashMap::new();
+// pub struct CardDetailModel {
+//     drawing_area: Rc<gtk::DrawingArea>,
+// }
 
-    // ノードの追加
-    for (oid, info) in dag.nodes.clone() {
-        let idx = graph.add_node(info);
-        id_map.insert(oid, idx);
-    }
+// #[derive(Debug)]
+// pub enum CardDetailInput {
+//     // メインから drawer への命令
+//     RepoSelected(PathBuf),
+//     CloseRequested,
+// }
 
-    // エッジの追加 (子 -> 親)
-    for (child_oid, parent_oid) in dag.edges.clone() {
-        if let (Some(&child_idx), Some(&parent_idx)) =
-            (id_map.get(&child_oid), id_map.get(&parent_oid))
-        {
-            graph.add_edge(child_idx, parent_idx, ());
-        }
-    }
-    graph
-}
+// #[derive(Debug)]
+// pub enum CardDetailOutput {
+//     // drawer からメインへの通知（「閉じるボタンが押された」など）
+//     CloseRequested,
+// }
+
+// #[relm4::component(pub)]
+// impl Component for CardDetailModel {
+//     type Init = ();
+//     type Input = CardDetailInput;
+//     type Output = CardDetailOutput;
+//     type CommandOutput = ();
+
+//     view! {
+//         #[root]
+//         gtk::Box {
+//             set_orientation: gtk::Orientation::Vertical,
+//             set_width_request: 500,
+//             set_height_request: 600,
+//             // add_css_class: "background", // 背景色を確保
+//             inline_css: "background: #000;",
+
+//             // ヘッダー部分
+//             gtk::CenterBox {
+//                 set_margin_all: 10,
+//                 #[wrap(Some)]
+//                 set_center_widget = &gtk::Label {
+//                     set_label: "メニュー",
+//                     // add_css_class: "title-4",
+//                 },
+//                 #[wrap(Some)]
+//                 set_end_widget = &gtk::Button {
+//                     set_icon_name: "window-close-symbolic",
+//                     // add_css_class: "flat",
+//                     // メインウィンドウへ「閉じてほしい」と通知
+//                     connect_clicked => CardDetailInput::CloseRequested,
+//                 }
+//             },
+
+//             gtk::Separator {},
+
+//             gtk::ScrolledWindow {
+//                 set_vexpand: true,
+//                 inline_css: "background: #fff;",
+
+//                 #[name = "drawing_area"]
+//                 gtk::DrawingArea {
+//                     set_content_width: 800,
+//                     set_content_height: 1000,
+//                     // 描画関数のセットアップ（下記 init / update 内で実行）
+//                 }
+//             },
+
+//             // メニューリスト
+//             gtk::ListBox {
+//                 add_css_class: "navigation-sidebar",
+//                 set_vexpand: true,
+
+//                 gtk::Label { set_label: "Zoom in", set_margin_all: 10 },
+//                 gtk::Label { set_label: "Zoom out", set_margin_all: 10 },
+//             }
+//         }
+//     }
+
+//     fn init(
+//         _: Self::Init,
+//         _root: Self::Root,
+//         sender: ComponentSender<Self>,
+//     ) -> ComponentParts<Self> {
+//         let widgets = view_output!();
+
+//         let model = CardDetailModel {
+//             drawing_area: Rc::from(widgets.drawing_area.clone()),
+//         };
+
+//         ComponentParts { model, widgets }
+//     }
+
+//     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
+//         match msg {
+//             // 内部ロジックが必要な場合
+//             CardDetailInput::RepoSelected(path_buf) => {
+//                 let dag = endringer::dag(&path_buf.as_path()).expect("failed to get dag");
+//                 self.drawing_area.set_draw_func(move |_, cr, _w, _h| {
+//                     draw_graph(cr, &build_petgraph(&dag));
+//                 });
+//             }
+//             CardDetailInput::CloseRequested => {
+//                 sender.output(CardDetailOutput::CloseRequested).unwrap()
+//             }
+//         }
+//     }
+// }
 
 fn draw_graph(cr: &cairo::Context, graph: &DiGraph<CommitInfo, ()>) {
     let node_radius = 10.0;
@@ -164,4 +197,25 @@ fn draw_graph(cr: &cairo::Context, graph: &DiGraph<CommitInfo, ()>) {
             cr.stroke().expect("Failed to stroke");
         }
     }
+}
+
+fn build_petgraph(dag: &DagInfo) -> DiGraph<CommitInfo, ()> {
+    let mut graph = DiGraph::<CommitInfo, ()>::new();
+    let mut id_map = HashMap::new();
+
+    // ノードの追加
+    for (oid, info) in dag.nodes.clone() {
+        let idx = graph.add_node(info);
+        id_map.insert(oid, idx);
+    }
+
+    // エッジの追加 (子 -> 親)
+    for (child_oid, parent_oid) in dag.edges.clone() {
+        if let (Some(&child_idx), Some(&parent_idx)) =
+            (id_map.get(&child_oid), id_map.get(&parent_oid))
+        {
+            graph.add_edge(child_idx, parent_idx, ());
+        }
+    }
+    graph
 }

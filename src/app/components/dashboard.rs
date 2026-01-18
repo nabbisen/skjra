@@ -1,2 +1,2 @@
 pub mod card;
-pub mod card_detail;
+// pub mod card_detail;

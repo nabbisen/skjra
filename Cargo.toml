@@ -3,35 +3,9 @@ name = "changeshelf"
 version = "0.1.0"
 edition = "2024"
 
-description = "A VCS-agnostic tool for inspecting, organizing, and visualizing changes. Git and jj supported."
-authors = ["nabbisen <nabbisen@scqr.net>"]
-license = "Apache-2.0"
-
-categories = ["development-tools", "data-structures"]
-keywords = ["gui", "git", "jj", "visualization"]
-repository = "https://github.com/nabbisen/changeshelf"
-readme = "README.md"
-rust-version = "1.85.0"
-
-[profile.release]     # shrink executable size
-opt-level = "z"
-lto = true
-# panic = "abort"
-strip = true
-codegen-units = 1
-
-[profile.dev]         # to reasonably improve productivity
-opt-level = 1         # slightly optimize
-lto = false           # disable link-time optimizations
-# strip = "debuginfo" # reduce size
-incremental = true
-
 [dependencies]
-endringer = "0"
-
-cairo-rs = "0"
 chrono = { version = "0", default-features = false, features = ["clock"] }
-gix = "0"
-relm4 = "0"
-relm4-components = "0"
+endringer = "0"
+iced = "0.14"
+rfd = "0.17"
 petgraph = "0"
