@@ -1,15 +1,17 @@
-use std::{fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 // components/search_bar.rs
 use crate::app::components::{
-    common::drawer::Drawer,
+    common::{drawer::Drawer, select::Select},
     dashboard::card::{self, Card},
 };
+use endringer::types::{CommitInfo, DagInfo};
 use iced::{
     Element,
     Length::Fill,
     widget::{Container, button, column, row, scrollable, stack, text},
 };
+use petgraph::graph::DiGraph;
 
 #[derive(Default)]
 pub struct Dashboard {
@@ -122,6 +124,10 @@ impl Dashboard {
                         Ok(a) => Some(a),
                         Err(_) => None,
                     },
+                    branch_selector: Select::new(
+                        vec!["test".to_owned(), "test2".to_owned()],
+                        "test".to_owned(),
+                    ),
                 }];
                 return;
             }
@@ -158,6 +164,10 @@ impl Dashboard {
                     Ok(a) => Some(a),
                     Err(_) => None,
                 },
+                branch_selector: Select::new(
+                    vec!["test".to_owned(), "test2".to_owned()],
+                    "test".to_owned(),
+                ),
             })
             .collect();
     }
@@ -169,12 +179,46 @@ impl Dashboard {
         // column![text(self.selected_card_id.clone().unwrap_or(123)),]
         //     .spacing(10)
         //     .into()
+
+        // let dag = endringer::dag(self.selected_path.clone().unwrap_or_default().as_path())
+        //     .expect("failed to get dag");
+        // let graph = build_petgraph(&dag);
+
         let rows = (0..100)
             .map(|i| {
                 // 各行の Column
                 row![text(format!("row {}", i)), text("item A"), text("item B"),].into()
             })
             .collect::<Vec<_>>();
+        // let mut rows = vec![];
+        // for node_idx in graph.node_indices() {
+        //     let row = Row::new();
+        //     if let Some(info) = graph.node_weight(node_idx) {
+        //         row.push(text(info.summary.to_owned()));
+        //     }
+        //     rows.push(row.into());
+        // }
         column(rows).into()
     }
+}
+
+fn build_petgraph(dag: &DagInfo) -> DiGraph<CommitInfo, ()> {
+    let mut graph = DiGraph::<CommitInfo, ()>::new();
+    let mut id_map = HashMap::new();
+
+    // ノードの追加
+    for (oid, info) in dag.nodes.clone() {
+        let idx = graph.add_node(info);
+        id_map.insert(oid, idx);
+    }
+
+    // エッジの追加 (子 -> 親)
+    for (child_oid, parent_oid) in dag.edges.clone() {
+        if let (Some(&child_idx), Some(&parent_idx)) =
+            (id_map.get(&child_oid), id_map.get(&parent_oid))
+        {
+            graph.add_edge(child_idx, parent_idx, ());
+        }
+    }
+    graph
 }

@@ -4,6 +4,7 @@ use endringer::types::StatusDigest;
 use iced::widget::{Column, button, column, container, text};
 use iced::{Alignment, Element, Length};
 
+use crate::app::components::common::select::{self, Select};
 use crate::app::utils::system_time_to_string;
 
 #[derive(Debug, Clone)]
@@ -11,19 +12,27 @@ pub struct Card {
     pub id: usize,
     pub path: PathBuf,
     pub status_digest: Option<StatusDigest>,
+    pub branch_selector: Select,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
     DemoDelete, // 削除ボタンが押された
+    SelectorMessage(select::Message),
 }
 
 impl Card {
-    pub fn new(id: usize, path: PathBuf, status_digest: Option<StatusDigest>) -> Self {
+    pub fn new(
+        id: usize,
+        path: PathBuf,
+        status_digest: Option<StatusDigest>,
+        branch_selector: Select,
+    ) -> Self {
         Self {
             id,
             path,
             status_digest,
+            branch_selector,
         }
     }
 
@@ -53,6 +62,8 @@ impl Card {
         };
 
         c = c.push(button("詳細").on_press(Message::DemoDelete));
+
+        c = c.push(self.branch_selector.view().map(Message::SelectorMessage));
 
         container(c.spacing(10).align_x(Alignment::Center))
             .padding(20)
