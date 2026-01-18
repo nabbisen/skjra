@@ -105,12 +105,6 @@ impl Dashboard {
                 }
             }
             Message::CardMessage(id, card_message) => {
-                // match card_msg {
-                //     card::Message::DemoDelete => {
-                //         // 特定のIDのカードを削除
-                //         self.cards.retain(|c| c.id != id);
-                //     }
-                // }
                 match self.cards.iter_mut().find(|x| x.id == id) {
                     Some(x) => {
                         x.update(card_message);
@@ -162,17 +156,6 @@ impl Dashboard {
     }
 
     fn view_card_details(&self) -> Element<'_, Message> {
-        // let handle = Handle::from_pixels(width as u32, height as u32, pixels);
-
-        // Image::new(handle).into()
-        // column![text(self.selected_card_id.clone().unwrap_or(123)),]
-        //     .spacing(10)
-        //     .into()
-
-        // let dag = endringer::dag(self.selected_path.clone().unwrap_or_default().as_path())
-        //     .expect("failed to get dag");
-        // let graph = build_petgraph(&dag);
-
         let card = self
             .cards
             .iter()
@@ -207,14 +190,7 @@ impl Dashboard {
                 .into()
             })
             .collect::<Vec<_>>();
-        // let mut rows = vec![];
-        // for node_idx in graph.node_indices() {
-        //     let row = Row::new();
-        //     if let Some(info) = graph.node_weight(node_idx) {
-        //         row.push(text(info.summary.to_owned()));
-        //     }
-        //     rows.push(row.into());
-        // }
+
         column(rows).into()
     }
 }

@@ -34,7 +34,7 @@ pub enum Message {
 }
 
 impl Select {
-    // 3. 初期化：選択アイテム群を登録する
+    // 初期化：選択アイテム群を登録する
     pub fn new(options: Vec<SelectOption>, label: impl Into<String>) -> Self {
         Self {
             options: combo_box::State::new(options),
@@ -44,7 +44,7 @@ impl Select {
         }
     }
 
-    // 4. View：UIを描画
+    // View：UIを描画
     // 親のMessage型に変換できるように設計しても良いですが、
     // ここではコンポーネント自身のMessageを返します。
     pub fn view(&self) -> Element<'_, Message> {
