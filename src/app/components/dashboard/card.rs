@@ -63,12 +63,32 @@ impl Card {
 
         c = c.push(button("詳細").on_press(Message::DemoDelete));
 
-        c = c.push(self.branch_selector.view().map(Message::SelectorMessage));
+        c = c.push(
+            self.branch_selector
+                .view()
+                .map(move |msg| Message::SelectorMessage(msg)),
+        );
 
         container(c.spacing(10).align_x(Alignment::Center))
             .padding(20)
             .width(Length::Fixed(150.0))
             .style(container::rounded_box) // 0.14のスタイル指定
             .into()
+    }
+
+    pub fn update(&mut self, message: Message) {
+        match message {
+            Message::SelectorMessage(selector_message) => {
+                // 1. まず子に処理させて、子の状態を更新する
+                self.branch_selector.update(selector_message.clone());
+
+                // 2. その上で、もし「選択」イベントだったら親としての追加処理をする
+                if let select::Message::OptionSelected(selected_value) = selector_message {
+                    println!("親が選択を検知しました: {}", selected_value);
+                    // ここで親にしかできない処理（API呼び出しなど）を書く
+                }
+            }
+            Message::DemoDelete => {}
+        }
     }
 }

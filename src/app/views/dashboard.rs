@@ -23,7 +23,7 @@ pub struct Dashboard {
 #[derive(Debug, Clone)]
 pub enum Message {
     FolderPick,
-    DemoDelete(usize, card::Message),
+    CardMessage(usize, card::Message),
     DrawerClose,
 }
 
@@ -46,7 +46,7 @@ impl Dashboard {
             .map(|card| {
                 let id = card.id;
                 // 子の view を map して親の Message に変換
-                card.view().map(move |msg| Message::DemoDelete(id, msg))
+                card.view().map(move |msg| Message::CardMessage(id, msg))
             })
             .collect::<Vec<_>>())
         .spacing(20);
@@ -99,13 +99,19 @@ impl Dashboard {
                     self.cards_update();
                 }
             }
-            Message::DemoDelete(id, _card_msg) => {
+            Message::CardMessage(id, card_message) => {
                 // match card_msg {
                 //     card::Message::DemoDelete => {
                 //         // 特定のIDのカードを削除
                 //         self.cards.retain(|c| c.id != id);
                 //     }
                 // }
+                match self.cards.iter_mut().find(|x| x.id == id) {
+                    Some(x) => {
+                        x.update(card_message);
+                    }
+                    _ => (),
+                };
                 self.selected_card_id = Some(id)
             }
             Message::DrawerClose => self.selected_card_id = None,
