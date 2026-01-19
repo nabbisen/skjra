@@ -107,11 +107,15 @@ impl Dashboard {
             Message::CardMessage(id, card_message) => {
                 match self.cards.iter_mut().find(|x| x.id == id) {
                     Some(x) => {
-                        x.update(card_message);
+                        x.update(card_message.clone());
+
+                        match card_message {
+                            card::Message::ShowDetail => self.selected_card_id = Some(id),
+                            _ => (),
+                        }
                     }
                     _ => (),
                 };
-                self.selected_card_id = Some(id)
             }
             Message::DrawerClose => self.selected_card_id = None,
         }

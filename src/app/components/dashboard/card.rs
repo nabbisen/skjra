@@ -19,8 +19,8 @@ pub struct Card {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    DemoDelete, // 削除ボタンが押された
     SelectMessage(select::Message),
+    ShowDetail,
 }
 
 impl Card {
@@ -67,7 +67,7 @@ impl Card {
             c = c.push(text(dir_name).size(20));
         };
 
-        c = c.push(button("詳細").on_press(Message::DemoDelete));
+        c = c.push(button("詳細").on_press(Message::ShowDetail));
 
         c = c.push(
             self.branch_selector
@@ -94,7 +94,7 @@ impl Card {
                     // ここで親にしかできない処理（API呼び出しなど）を書く
                 }
             }
-            Message::DemoDelete => {}
+            _ => {}
         }
     }
 }
