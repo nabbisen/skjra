@@ -15,7 +15,7 @@ use endringer::repository::repository;
 use iced::{
     Element,
     Length::Fill,
-    widget::{Container, button, column, container, row, scrollable, stack, text},
+    widget::{Container, Row, button, column, container, row, scrollable, stack, text},
 };
 
 #[derive(Default)]
@@ -45,7 +45,7 @@ impl Dashboard {
 
     pub fn view(&self) -> Element<'_, Message> {
         // カードのリストをループで生成
-        let card_list = row(self
+        let card_list = self
             .cards
             .iter()
             .map(|card| {
@@ -53,8 +53,7 @@ impl Dashboard {
                 // 子の view を map して親の Message に変換
                 card.view().map(move |msg| Message::CardMessage(id, msg))
             })
-            .collect::<Vec<_>>())
-        .spacing(20);
+            .collect::<Vec<_>>();
 
         let path_display = self
             .selected_path
@@ -66,7 +65,7 @@ impl Dashboard {
             text("Dashboard").size(30),
             button("フォルダを選択").on_press(Message::FolderPick),
             text(path_display),
-            scrollable(row![card_list,].spacing(20).padding(20))
+            scrollable(Row::with_children(card_list).spacing(20).padding(20).wrap())
         ])
         .width(Fill)
         .height(Fill);
